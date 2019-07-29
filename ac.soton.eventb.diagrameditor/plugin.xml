@@ -2,28 +2,32 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension-point id="ac.soton.eventb.diagrameditor.featureprovider" name="Feature Provider" schema="schema/ac.soton.eventb.diagrameditor.featureprovider.exsd"/>
+   
+   <extension
+         point="org.eclipse.graphiti.ui.diagramTypes">
+      <diagramType
+            description="A Project Diagram, that shows machines, contexts, ..."
+            id="ac.soton.eventb.diagrameditor.ProjectDiagramType"
+            name="Project Diagram Type"
+            type="projectDiagram">
+      </diagramType>
+   </extension>
+   
    <extension
          point="org.eclipse.graphiti.ui.diagramTypeProviders">
       <diagramTypeProvider
             class="ac.soton.eventb.diagrameditor.DiagramTypeProvider"
-            id="diagram-editor.diagramTypeProvider"
-            name="diagram-editor.diagramTypeProvider">
+            id="ac.soton.eventb.diagrameditor.DiagramTypeProvider"
+            name="Project Diagram Editor">
          <diagramType
-               id="diagram-editor.diagramType2">
+               id="ac.soton.eventb.diagrameditor.ProjectDiagramType">
          </diagramType>
          <imageProvider
-         	id="imageProviderID">
+         	id="ac.soton.eventb.diagrameditor.ImageProvider">
          </imageProvider>
       </diagramTypeProvider>
    </extension>
-   <extension
-         point="org.eclipse.graphiti.ui.diagramTypes">
-      <diagramType
-            id="diagram-editor.diagramType2"
-            name="diagram-editor.diagramType2"
-            type="diagram-editor.diagramType2">
-      </diagramType>
-   </extension>
+   
    <extension
          point="org.eclipse.ui.editors">
       <editor
@@ -35,11 +39,12 @@
             name="Diagram Editor">
       </editor>
    </extension>
+   
    <extension
    		 point="org.eclipse.graphiti.ui.imageProviders">
    		 <imageProvider
    		 	class="ac.soton.eventb.diagrameditor.ImageProvider"
-   		 	id="imageProviderID">
+   		 	id="ac.soton.eventb.diagrameditor.ImageProvider">
    		 </imageProvider>
    </extension>
 
