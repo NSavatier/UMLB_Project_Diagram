@@ -34,7 +34,6 @@ import org.eclipse.graphiti.features.custom.ICustomFeature;
 import org.eclipse.graphiti.features.impl.IIndependenceSolver;
 import org.eclipse.graphiti.ui.features.DefaultFeatureProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eventb.emf.core.EventBElement;
@@ -107,30 +106,15 @@ public class EventBDiagramFeatureProvider extends DefaultFeatureProvider {
 
 	public EventBDiagramFeatureProvider(IDiagramTypeProvider dtp) {
 		super(dtp);
-		IFile file = null;
-		IProject project = null;
-		String projectPath = null;
-		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		
-	    if (window != null)
-	    {
-	        IStructuredSelection selection = (IStructuredSelection) window.getSelectionService().getSelection();
-	        Object firstElement = selection==null? null : selection.getFirstElement();
-	        if(firstElement instanceof IFile){
-	        	 file = (IFile) firstElement;
-	        	 projectPath = file.getFullPath().toString();
-	        }
-	        if(file == null){
-	        	project = (IProject)firstElement;
-	        	projectPath = project.getFullPath().toString();
-	        }
-	    }
+		//Get the path of the current project
+		String projectPath = getProjectPath();
 	    
+		//Load resources of the project located at the given path
 		final ResourceSet rs = new ResourceSetImpl();
-		rs.getResourceFactoryRegistry().getExtensionToFactoryMap()
-		.put("*", new ProjectFactory()); //$NON-NLS-1$
+		rs.getResourceFactoryRegistry().getExtensionToFactoryMap().put("*", new ProjectFactory()); //$NON-NLS-1$
 		this.pr = (ProjectResource) rs.createResource(URI
-				.createPlatformResourceURI(projectPath, true)); //$NON-NLS-1$
+					.createPlatformResourceURI(projectPath, true)); //$NON-NLS-1$
 		try {
 			this.pr.load(new HashMap<>());
 		} catch (final IOException e) {
@@ -143,9 +127,11 @@ public class EventBDiagramFeatureProvider extends DefaultFeatureProvider {
 		this.eventBDirectEditingFeatureFactory = new EventBFeatureFactory<>();
 		this.eventBUpdateFeatureFactory = new EventBFeatureFactory<>();
 
+		//register extension point
 		final IExtensionRegistry registry = Platform.getExtensionRegistry();
 		final IExtensionPoint extensionPoint = registry.getExtensionPoint("ac.soton.eventb.diagrameditor.featureprovider"); //$NON-NLS-1$
 
+		//Register provided features
 		final IEventBFeature[] providedFeatures = { new EventBElementFeature(),
 				new EventBRelationFeature(), new EventBProjectFeature() };
 		final ArrayList<IEventBFeature> features = new ArrayList<>();
@@ -162,8 +148,6 @@ public class EventBDiagramFeatureProvider extends DefaultFeatureProvider {
 			}
 
 		}
-
-
 
 		for (final IEventBFeature f : features) {
 			if (f.canAdd()) {
@@ -189,6 +173,32 @@ public class EventBDiagramFeatureProvider extends DefaultFeatureProvider {
 		}
 
 		this.setIndependenceSolver(new EventBIndependenceSolver());
+	}
+
+	/**
+	 * Returns the path of the currently active project
+	 * @return project path of the currently active project
+	 */
+	private String getProjectPath() {
+		IFile file = null;
+		IProject project = null;
+		String projectPath = null;
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		
+	    if (window != null)
+	    {
+	        IStructuredSelection selection = (IStructuredSelection) window.getSelectionService().getSelection();
+	        Object firstElement = selection==null? null : selection.getFirstElement();
+	        if(firstElement instanceof IFile){
+	        	 file = (IFile) firstElement;
+	        	 projectPath = file.getFullPath().toString();
+	        }
+	        if(file == null){
+	        	project = (IProject)firstElement;
+	        	projectPath = project.getFullPath().toString();
+	        }
+	    }
+		return projectPath;
 	}
 
 	@Override
