@@ -3,7 +3,6 @@ package ac.soton.eventb.diagrameditor.features;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.eclipse.emf.ecore.EObject;
 import org.eclipse.graphiti.features.IAddFeature;
 import org.eclipse.graphiti.features.ICreateConnectionFeature;
 import org.eclipse.graphiti.features.ICreateFeature;
@@ -53,10 +52,10 @@ class CreateExtendsRelationshipFeature extends AbstractCreateConnectionFeature {
 
 	@Override
 	public boolean canCreate(ICreateConnectionContext context) {
-		final EObject source = (EObject) this
+		final Object source = this
 				.getBusinessObjectForPictogramElement(context
 						.getSourcePictogramElement());
-		final EObject target = (EObject) this
+		final Object target = this
 				.getBusinessObjectForPictogramElement(context
 						.getTargetPictogramElement());
 
@@ -65,7 +64,7 @@ class CreateExtendsRelationshipFeature extends AbstractCreateConnectionFeature {
 
 	@Override
 	public boolean canStartConnection(ICreateConnectionContext context) {
-		final EObject source = (EObject) this
+		final Object source = this
 				.getBusinessObjectForPictogramElement(context
 						.getSourcePictogramElement());
 
@@ -74,10 +73,10 @@ class CreateExtendsRelationshipFeature extends AbstractCreateConnectionFeature {
 
 	@Override
 	public Connection create(ICreateConnectionContext context) {
-		final EObject source = (EObject) this
+		final Object source = this
 				.getBusinessObjectForPictogramElement(context
 						.getSourcePictogramElement());
-		final EObject target = (EObject) this
+		final Object target = this
 				.getBusinessObjectForPictogramElement(context
 						.getTargetPictogramElement());
 
@@ -106,10 +105,10 @@ class CreateRefinesRelationshipFeature extends AbstractCreateConnectionFeature {
 	
 	@Override
 	public boolean canCreate(ICreateConnectionContext context) {
-		final EObject source = (EObject) this
+		final Object source = this
 				.getBusinessObjectForPictogramElement(context
 						.getSourcePictogramElement());
-		final EObject target = (EObject) this
+		final Object target = this
 				.getBusinessObjectForPictogramElement(context
 						.getTargetPictogramElement());
 
@@ -118,7 +117,7 @@ class CreateRefinesRelationshipFeature extends AbstractCreateConnectionFeature {
 
 	@Override
 	public boolean canStartConnection(ICreateConnectionContext context) {
-		final EObject source = (EObject) this
+		final Object source = this
 				.getBusinessObjectForPictogramElement(context
 						.getSourcePictogramElement());
 
@@ -127,10 +126,10 @@ class CreateRefinesRelationshipFeature extends AbstractCreateConnectionFeature {
 
 	@Override
 	public Connection create(ICreateConnectionContext context) {
-		final EObject source = (EObject) this
+		final Object source = this
 				.getBusinessObjectForPictogramElement(context
 						.getSourcePictogramElement());
-		final EObject target = (EObject) this
+		final Object target = this
 				.getBusinessObjectForPictogramElement(context
 						.getTargetPictogramElement());
 
@@ -159,10 +158,10 @@ class CreateSeesRelationshipFeature extends AbstractCreateConnectionFeature {
 	
 	@Override
 	public boolean canCreate(ICreateConnectionContext context) {
-		final EObject source = (EObject) this
+		final Object source = this
 				.getBusinessObjectForPictogramElement(context
 						.getSourcePictogramElement());
-		final EObject target = (EObject) this
+		final Object target = this
 				.getBusinessObjectForPictogramElement(context
 						.getTargetPictogramElement());
 
@@ -171,7 +170,7 @@ class CreateSeesRelationshipFeature extends AbstractCreateConnectionFeature {
 
 	@Override
 	public boolean canStartConnection(ICreateConnectionContext context) {
-		final EObject source = (EObject) this
+		final Object source = this
 				.getBusinessObjectForPictogramElement(context
 						.getSourcePictogramElement());
 
@@ -180,10 +179,10 @@ class CreateSeesRelationshipFeature extends AbstractCreateConnectionFeature {
 
 	@Override
 	public Connection create(ICreateConnectionContext context) {
-		final EObject source = (EObject) this
+		final Object source = this
 				.getBusinessObjectForPictogramElement(context
 						.getSourcePictogramElement());
-		final EObject target = (EObject) this
+		final Object target = this
 				.getBusinessObjectForPictogramElement(context
 						.getTargetPictogramElement());
 
