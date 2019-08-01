@@ -291,8 +291,8 @@ public class EventBRelationFeature implements IEventBFeature {
 			@Override
 			public boolean match(IDeleteContext o,
 					EventBDiagramFeatureProvider e) {
-				return e.getBusinessObjectForPictogramElement(o
-						.getPictogramElement()) instanceof EventBRelation;
+				return e.getBusinessObjectForPictogramElement(o.getPictogramElement()) 
+					   instanceof EventBRelation;
 			}
 		};
 	}
@@ -361,18 +361,18 @@ class EventBRelationshipAddFeature extends AbstractAddFeature {
 		polyline.setLineWidth(new Integer(2));
 		polyline.setForeground(this.manageColor(IColorConstant.RED));
 
-		// create link and wire it
-		this.link(connection, context.getNewObject());
-		ConnectionDecorator textDecorator =
-				peCreateService.createConnectionDecorator(connection, true,
-						0.5, true);
+		//label of the connection
+		ConnectionDecorator textDecorator = peCreateService.createConnectionDecorator(connection, true, 0.5, true);
 		createLabel(textDecorator);
 
+		//"triangle" at the end of the arrow
 		ConnectionDecorator conDeco;
-		conDeco = peCreateService
-				.createConnectionDecorator(connection, false, 1.0, true);
+		conDeco = peCreateService.createConnectionDecorator(connection, false, 1.0, true);
 		createPolylineArrow(conDeco);
 
+		// create link and wire it
+		this.link(connection, context.getNewObject());
+		
 		return connection;
 	}
 

@@ -142,6 +142,7 @@ class EventBProjectUpdateFeature extends AbstractUpdateFeature {
 			updated = true;
 		}
 
+		//Add a shape for each EventBNamedCommentedElement that exist in the project
 		for (final EventBNamedCommentedElement e : project.getComponents()) {
 			final AddContext ac = new AddContext();
 			ac.setTargetContainer(this.getDiagram());
@@ -149,8 +150,10 @@ class EventBProjectUpdateFeature extends AbstractUpdateFeature {
 			this.getFeatureProvider().addIfPossible(ac);
 		}
 
+		//remove existing connections
 		this.getDiagram().getConnections().clear();
 
+		//Create the various connections
 		for (final Shape s : this.getDiagram().getChildren()) {
 			if (s instanceof ContainerShape) {
 				final ContainerShape c = (ContainerShape) s;
@@ -158,26 +161,31 @@ class EventBProjectUpdateFeature extends AbstractUpdateFeature {
 						.getBusinessObjectForPictogramElement(c);
 				if (element instanceof Machine) {
 					final Machine m = (Machine) element;
+					//For all contexts that this machine sees
 					for (final Context ctx : m.getSees()) {
-						for (final Shape innerShape : this.getDiagram()
-								.getChildren()) {
+						//look for Shapes who represent the context that the machine m sees
+						//and create the connection between the machine and its context
+						for (final Shape innerShape : this.getDiagram().getChildren()) {
 							if (this.getBusinessObjectForPictogramElement(innerShape) == ctx) {
-								final AnchorContainer a1 = s;
-								final AnchorContainer a2 = innerShape;
+								//Add anchors to the Shape that represents the Context
+								final AnchorContainer a1 = s;//anchor on the machine side (s is the machine's shape)
+								final AnchorContainer a2 = innerShape;//anchor on the context side
 								Graphiti.getPeService().createChopboxAnchor(a1);
 								Graphiti.getPeService().createChopboxAnchor(a2);
-
+								
+								//create the connection between the two anchors
 								final AddConnectionContext acc = new AddConnectionContext(
-										a1.getAnchors().get(0), a2.getAnchors()
-										.get(0));
+										a1.getAnchors().get(0), a2.getAnchors().get(0));
 								acc.setNewObject(new MachineSeesRelation(m, ctx));
 								this.getFeatureProvider().addIfPossible(acc);
 							}
 						}
 					}
+					//For all machines that refine m
 					for (final Machine mac : m.getRefines()) {
-						for (final Shape innerShape : this.getDiagram()
-								.getChildren()) {
+						//look for Shapes who represent the machine that refines m
+						//and create the connection between the two machines
+						for (final Shape innerShape : this.getDiagram().getChildren()) {
 							if (this.getBusinessObjectForPictogramElement(innerShape) == mac) {
 								final AnchorContainer a1 = s;
 								final AnchorContainer a2 = innerShape;
@@ -185,19 +193,19 @@ class EventBProjectUpdateFeature extends AbstractUpdateFeature {
 								Graphiti.getPeService().createChopboxAnchor(a2);
 
 								final AddConnectionContext acc = new AddConnectionContext(
-										a1.getAnchors().get(0), a2.getAnchors()
-										.get(0));
-								acc.setNewObject(new MachineRefinesRelation(m,
-										mac));
+										a1.getAnchors().get(0), a2.getAnchors().get(0));
+								acc.setNewObject(new MachineRefinesRelation(m,mac));
 								this.getFeatureProvider().addIfPossible(acc);
 							}
 						}
 					}
 				} else if (element instanceof Context) {
 					final Context ctx1 = (Context) element;
+					//For all Contexts that extend ctx1
 					for (final Context ctx2 : ctx1.getExtends()) {
-						for (final Shape innerShape : this.getDiagram()
-								.getChildren()) {
+						//look for shapes that represent this context
+						//and create the connection between the two
+						for (final Shape innerShape : this.getDiagram().getChildren()) {
 							if (this.getBusinessObjectForPictogramElement(innerShape) == ctx2) {
 
 								final AnchorContainer a1 = s;
@@ -206,10 +214,8 @@ class EventBProjectUpdateFeature extends AbstractUpdateFeature {
 								Graphiti.getPeService().createChopboxAnchor(a2);
 
 								final AddConnectionContext acc = new AddConnectionContext(
-										a1.getAnchors().get(0), a2.getAnchors()
-										.get(0));
-								acc.setNewObject(new ContextExtendsRelation(
-										ctx1, ctx2));
+										a1.getAnchors().get(0), a2.getAnchors().get(0));
+								acc.setNewObject(new ContextExtendsRelation(ctx1, ctx2));
 								this.getFeatureProvider().addIfPossible(acc);
 							}
 						}
