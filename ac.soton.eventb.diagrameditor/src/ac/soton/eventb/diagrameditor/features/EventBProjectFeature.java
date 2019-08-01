@@ -2,6 +2,7 @@ package ac.soton.eventb.diagrameditor.features;
 
 import java.util.Collection;
 
+import org.eclipse.emf.common.util.EList;
 import org.eclipse.graphiti.features.IAddFeature;
 import org.eclipse.graphiti.features.ICreateConnectionFeature;
 import org.eclipse.graphiti.features.ICreateFeature;
@@ -19,6 +20,7 @@ import org.eclipse.graphiti.features.context.impl.AddContext;
 import org.eclipse.graphiti.features.impl.AbstractUpdateFeature;
 import org.eclipse.graphiti.features.impl.Reason;
 import org.eclipse.graphiti.mm.pictograms.AnchorContainer;
+import org.eclipse.graphiti.mm.pictograms.Connection;
 import org.eclipse.graphiti.mm.pictograms.ContainerShape;
 import org.eclipse.graphiti.mm.pictograms.Diagram;
 import org.eclipse.graphiti.mm.pictograms.Shape;
@@ -150,8 +152,15 @@ class EventBProjectUpdateFeature extends AbstractUpdateFeature {
 			this.getFeatureProvider().addIfPossible(ac);
 		}
 
-		//remove existing connections
-		this.getDiagram().getConnections().clear();
+		//Remove the links graphical components (to redraw them properly)
+		//ie : unregister the connections from the elements to which they are connected, then remove them
+		EList<Connection> connections = this.getDiagram().getConnections();
+		while(! connections.isEmpty()) {
+			Connection connection = connections.get(0);
+			//Then we remove the pictogram of this connection from the diagram, while unregistering cross references to this pictogram
+			//to ensure that it is deallocated properly (ie : no more handles on this object, so that it can be garbage-collected)
+			Graphiti.getPeService().deletePictogramElement(connection);
+		}
 
 		//Create the various connections
 		for (final Shape s : this.getDiagram().getChildren()) {
