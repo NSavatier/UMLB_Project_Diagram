@@ -1,13 +1,11 @@
 package ac.soton.eventb.diagrameditor.features;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.TreeIterator;
-import org.eclipse.emf.ecore.ENamedElement;
 import org.eclipse.emf.ecore.EObject;
 import org.eclipse.graphiti.features.IAddFeature;
 import org.eclipse.graphiti.features.ICreateConnectionFeature;
@@ -40,7 +38,6 @@ import org.eventb.emf.persistence.ProjectResource;
 
 import ac.soton.eventb.diagrameditor.EventBDiagramFeatureProvider;
 import ac.soton.eventb.diagrameditor.relations.ContextExtendsRelation;
-import ac.soton.eventb.diagrameditor.relations.EventBRelation;
 import ac.soton.eventb.diagrameditor.relations.MachineRefinesRelation;
 import ac.soton.eventb.diagrameditor.relations.MachineSeesRelation;
 
@@ -151,6 +148,16 @@ class EventBProjectUpdateFeature extends AbstractUpdateFeature {
 			this.link(context.getPictogramElement(), project);
 			updated = true;
 		}
+		
+		//Remove the links graphical components (to redraw them properly)
+		//ie : unregister the connections from the elements to which they are connected, then remove them
+		EList<Connection> connections = this.getDiagram().getConnections();
+		while(! connections.isEmpty()) {
+			Connection connection = connections.get(0);
+			//Then we remove the pictogram of this connection from the diagram, while unregistering cross references to this pictogram
+			//to ensure that it is deallocated properly (ie : no more handles on this object, so that it can be garbage-collected)
+			Graphiti.getPeService().deletePictogramElement(connection);
+		}
 
 		//Add a shape for each EventBNamedCommentedElement that exist in the project
 		for (final EventBNamedCommentedElement e : project.getComponents()) {
@@ -171,22 +178,7 @@ class EventBProjectUpdateFeature extends AbstractUpdateFeature {
 					addContext.setNewObject(content);
 					this.getFeatureProvider().addIfPossible(addContext);
 				}
-				
-				
 			}
-			
-			
-		}
-		
-
-		//Remove the links graphical components (to redraw them properly)
-		//ie : unregister the connections from the elements to which they are connected, then remove them
-		EList<Connection> connections = this.getDiagram().getConnections();
-		while(! connections.isEmpty()) {
-			Connection connection = connections.get(0);
-			//Then we remove the pictogram of this connection from the diagram, while unregistering cross references to this pictogram
-			//to ensure that it is deallocated properly (ie : no more handles on this object, so that it can be garbage-collected)
-			Graphiti.getPeService().deletePictogramElement(connection);
 		}
 
 		//Create the various connections
@@ -253,6 +245,49 @@ class EventBProjectUpdateFeature extends AbstractUpdateFeature {
 										a1.getAnchors().get(0), a2.getAnchors().get(0));
 								acc.setNewObject(new ContextExtendsRelation(ctx1, ctx2));
 								this.getFeatureProvider().addIfPossible(acc);
+							}
+						}
+					}
+				} 
+				//NOTE : this portion of code allows to draw any kind of EReference between EventBNamedCommentedElements
+				if(element instanceof EventBNamedCommentedElement) {
+					TreeIterator<EObject> contents = element.eAllContents();
+					while(contents.hasNext()) {
+						EObject content = contents.next();
+						
+						if(content instanceof EventBNamedCommentedElement) {
+							
+							//We draw links between the EventBNamedCommentedElement and its container
+							EObject container = content.eContainer();
+							//get the Pictograms that represent the container and the content
+							PictogramElement[] containerPictograms = this.getFeatureProvider().getAllPictogramElementsForBusinessObject(container);
+							PictogramElement[] contentPictograms = this.getFeatureProvider().getAllPictogramElementsForBusinessObject(content);
+							
+							if(containerPictograms.length >= 1 && contentPictograms.length >= 1) {
+								//We get the shapes for the container and the content
+								PictogramElement containerShape = containerPictograms[0];
+								PictogramElement contentShape = contentPictograms[0];
+								//Add anchors to the Shapes that represents the container and the content
+								///XXX : potentially unsafe cast made here !
+								final AnchorContainer a1 = (AnchorContainer) containerShape;//anchor on the container side
+								final AnchorContainer a2 = (AnchorContainer) contentShape;//anchor on the content side
+								Graphiti.getPeService().createChopboxAnchor(a1);
+								Graphiti.getPeService().createChopboxAnchor(a2);
+								
+								//create the connection between the two anchors
+								final AddConnectionContext acc = new AddConnectionContext(
+										a1.getAnchors().get(0), a2.getAnchors().get(0));
+								acc.setNewObject(content.eContainingFeature());
+								//System.out.println("Trying to add a connection between "+((EventBNamedCommentedElement) container).getName()+" and "+((EventBNamedCommentedElement) content).getName());
+								//System.out.println("Relation type : "+content.eContainingFeature().eClass()+" relation is an EventBRelation : "+(content.eContainingFeature() instanceof EventBRelation));
+								this.getFeatureProvider().addIfPossible(acc);
+							} else {
+								//if one of the elements that we tried to link had no pictogram, we signal it via a error message
+								Logger.getLogger("diagram-editor").log(Level.SEVERE, "WARNING : could not create link between "
+										+ "two EventBNamedCommentedElement : " +((EventBNamedCommentedElement) container).getName()
+										+" and "+((EventBNamedCommentedElement) content).getName()
+										+ "\n"+"Reason : containerPictograms.length = "+containerPictograms.length
+										+" contentPictograms.length = "+contentPictograms.length);
 							}
 						}
 					}

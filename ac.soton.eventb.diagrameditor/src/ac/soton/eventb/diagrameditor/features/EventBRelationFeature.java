@@ -3,6 +3,7 @@ package ac.soton.eventb.diagrameditor.features;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.eclipse.emf.ecore.EReference;
 import org.eclipse.graphiti.features.IAddFeature;
 import org.eclipse.graphiti.features.ICreateConnectionFeature;
 import org.eclipse.graphiti.features.ICreateFeature;
@@ -218,6 +219,7 @@ class CreateSeesRelationshipFeature extends AbstractCreateConnectionFeature {
  * the getAddMatcher() method returns a Matcher whose role is to provide the right EventBRelationshipAddFeature.
  */
 public class EventBRelationFeature implements IEventBFeature {
+
 	@Override
 	public boolean canAdd() {
 		return true;
@@ -258,13 +260,10 @@ public class EventBRelationFeature implements IEventBFeature {
 			public IAddFeature getFeature(IAddContext addContext,
 					EventBDiagramFeatureProvider featureProvider) {
 				
-				
-				
 				//FIXME : Damn, now that the code is more clear to me, this seems so dirty ... i will probably rewrite that, once I have fixed all the bugs
 				//FIXME : Seriously, the guys who wrote that could have used addContext.getNewObject() instead.
 				//FIXME : ie : if( addContext.getNewObject() instanceof MachineRefinesRelation) { doStuff(); }
 				//FIXME : to check it, if you don't believe me : System.out.println("addContextNewObject : "+addContext.getNewObject());
-				
 				if(addContext.toString().contains("MachineRefinesRelation")){
 					EventBRelationshipAddFeature.i = 1;
 				}
@@ -273,18 +272,24 @@ public class EventBRelationFeature implements IEventBFeature {
 				}else if(addContext.toString().contains("ContextExtendsRelation")){
 					EventBRelationshipAddFeature.i = 3;
 				}
-
 				
+				Object objectToShow = addContext.getNewObject();
 				if (this.match(addContext, featureProvider)) {
-					return new EventBRelationshipAddFeature(featureProvider);
+					if(objectToShow instanceof EventBRelation) {
+						//Add feature for EventBRelations
+						return new EventBRelationshipAddFeature(featureProvider);
+					} else if(objectToShow instanceof EReference) {
+						//Add feature for other types of relations (EReferences)
+						return new GenericRelationshipAddFeature(featureProvider, (EReference) objectToShow);
+					}//else return null
 				}
 				return null;
 			}
 
 			@Override
 			public boolean match(IAddContext addContext, EventBDiagramFeatureProvider featureProvider) {
-				
-				return addContext.getNewObject() instanceof EventBRelation;
+				return addContext.getNewObject() instanceof EventBRelation
+						|| addContext.getNewObject() instanceof EReference;
 			}
 		};
 	}
@@ -349,8 +354,7 @@ class EventBRelationshipAddFeature extends AbstractAddFeature {
 	private Polyline createPolylineArrow(GraphicsAlgorithmContainer container) {
 		IGaService gaService = Graphiti.getGaService();
 		Polygon polygon =
-				gaService.createPolygon(container, new int[] { -12, 10, 1, 0, -12,
-						-10 });
+				gaService.createPolygon(container, new int[] { -12, 10, 1, 0, -12, -10 });
 		polygon.setForeground(manageColor(IColorConstant.BLACK));
 		polygon.setBackground(manageColor(IColorConstant.BLACK));
 		polygon.setLineWidth(1);
@@ -381,7 +385,6 @@ class EventBRelationshipAddFeature extends AbstractAddFeature {
 
 	@Override
 	public PictogramElement add(IAddContext context) {
-		
 		final IAddConnectionContext addConContext = (IAddConnectionContext) context;
 		final IPeCreateService peCreateService = Graphiti.getPeCreateService();
 
@@ -413,15 +416,91 @@ class EventBRelationshipAddFeature extends AbstractAddFeature {
 
 	@Override
 	public boolean canAdd(IAddContext context) {
-		
-		if (context instanceof IAddConnectionContext
-				&& context.getNewObject() instanceof EventBRelation) {
+		if (context instanceof IAddConnectionContext && context.getNewObject() instanceof EventBRelation) {
 			return true;
 		}
 		return false;
 	}
 
 }
+
+/**
+ * Defines how other types of links are drawn
+ */
+class GenericRelationshipAddFeature extends AbstractAddFeature {
+
+	/**
+	 * Name of the eReference drawn by this GenericRelationshipAddFeature.
+	 * Displayed as the connection's label.
+	 */
+	private String objectShownName;
+
+	public GenericRelationshipAddFeature(IFeatureProvider fp, EReference eReferenceToDraw) {
+		super(fp);
+		this.objectShownName = eReferenceToDraw.getName();
+	}
+
+	@Override
+	public boolean canAdd(IAddContext context) {
+		if (context instanceof IAddConnectionContext) {
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public PictogramElement add(IAddContext context) {
+		final IAddConnectionContext addConContext = (IAddConnectionContext) context;
+		final IPeCreateService peCreateService = Graphiti.getPeCreateService();
+
+		// CONNECTION WITH POLYLINE
+		final Connection connection = peCreateService
+				.createFreeFormConnection(this.getDiagram());
+		connection.setStart(addConContext.getSourceAnchor());
+		connection.setEnd(addConContext.getTargetAnchor());
+
+		final IGaService gaService = Graphiti.getGaService();
+		final Polyline polyline = gaService.createPolyline(connection);
+		polyline.setLineWidth(new Integer(2));
+		polyline.setForeground(this.manageColor(IColorConstant.GRAY));
+
+		//label of the connection
+		ConnectionDecorator textDecorator = peCreateService.createConnectionDecorator(connection, true, 0.5, true);
+		createLabel(textDecorator);
+
+		//"triangle" at the end of the arrow
+		ConnectionDecorator conDeco;
+		conDeco = peCreateService.createConnectionDecorator(connection, false, 1.0, true);
+		createPolylineArrow(conDeco);
+
+		// create link and wire it
+		this.link(connection, context.getNewObject());
+		
+		return connection;
+	}
+
+	private Polyline createPolylineArrow(GraphicsAlgorithmContainer container) {
+		IGaService gaService = Graphiti.getGaService();
+		Polygon polygon =
+				gaService.createPolygon(container, new int[] { -12, 10, 1, 0, -12, -10 });
+		polygon.setForeground(manageColor(IColorConstant.BLACK));
+		polygon.setBackground(manageColor(IColorConstant.BLACK));
+		polygon.setLineWidth(1);
+		polygon.setFilled(true);
+		return polygon;
+	}
+
+	private Text createLabel(GraphicsAlgorithmContainer container) {
+		IGaService gaService = Graphiti.getGaService();
+		Text text = gaService.createText(container);
+		text.setForeground(manageColor(IColorConstant.BLACK));
+		gaService.setLocation(text, 10, 0);
+		text.setValue(objectShownName);
+		return text;
+	}
+
+}
+
 
 /**
  * Describes how the deletion of a relation must be handled
