@@ -257,30 +257,15 @@ public class EventBRelationFeature implements IEventBFeature {
 			//This method is the important one, as it is the one that describes what add feature will be returned,
 			//depending on the addContext that needs to be drawn
 			@Override
-			public IAddFeature getFeature(IAddContext addContext,
-					EventBDiagramFeatureProvider featureProvider) {
-				
-				//FIXME : Damn, now that the code is more clear to me, this seems so dirty ... i will probably rewrite that, once I have fixed all the bugs
-				//FIXME : Seriously, the guys who wrote that could have used addContext.getNewObject() instead.
-				//FIXME : ie : if( addContext.getNewObject() instanceof MachineRefinesRelation) { doStuff(); }
-				//FIXME : to check it, if you don't believe me : System.out.println("addContextNewObject : "+addContext.getNewObject());
-				if(addContext.toString().contains("MachineRefinesRelation")){
-					EventBRelationshipAddFeature.i = 1;
-				}
-				else if(addContext.toString().contains("MachineSeesRelation")){
-					EventBRelationshipAddFeature.i = 2;
-				}else if(addContext.toString().contains("ContextExtendsRelation")){
-					EventBRelationshipAddFeature.i = 3;
-				}
-				
-				Object objectToShow = addContext.getNewObject();
+			public IAddFeature getFeature(IAddContext addContext, EventBDiagramFeatureProvider featureProvider) {
+				Object connectionToDraw = addContext.getNewObject();
 				if (this.match(addContext, featureProvider)) {
-					if(objectToShow instanceof EventBRelation) {
+					if(connectionToDraw instanceof EventBRelation) {
 						//Add feature for EventBRelations
-						return new EventBRelationshipAddFeature(featureProvider);
-					} else if(objectToShow instanceof EReference) {
+						return new EventBRelationshipAddFeature(featureProvider, (EventBRelation) connectionToDraw);
+					} else if(connectionToDraw instanceof EReference) {
 						//Add feature for other types of relations (EReferences)
-						return new GenericRelationshipAddFeature(featureProvider, (EReference) objectToShow);
+						return new GenericRelationshipAddFeature(featureProvider, (EReference) connectionToDraw);
 					}//else return null
 				}
 				return null;
@@ -349,7 +334,12 @@ public class EventBRelationFeature implements IEventBFeature {
  * Defines how the links (relations) are drawn
  */
 class EventBRelationshipAddFeature extends AbstractAddFeature {
-	public static int i;
+	
+	/**
+	 * Label of the connection displayed by this addFeature
+	 */
+	private String label;
+	
 	//For creating the polyline arrow
 	private Polyline createPolylineArrow(GraphicsAlgorithmContainer container) {
 		IGaService gaService = Graphiti.getGaService();
@@ -367,20 +357,20 @@ class EventBRelationshipAddFeature extends AbstractAddFeature {
 		Text text = gaService.createText(container);
 		text.setForeground(manageColor(IColorConstant.BLACK));
 		gaService.setLocation(text, 10, 0);
-
-		if(i == 1){
-			text.setValue("refines");
-		}else if(i == 2){
-			text.setValue("sees");
-		}else if(i == 3){
-			text.setValue("extends");
-		}
-
+		text.setValue(label);
 		return text;
 	}
 
-	public EventBRelationshipAddFeature(IFeatureProvider fp) {
+	public EventBRelationshipAddFeature(IFeatureProvider fp, EventBRelation eventBRelation) {
 		super(fp);
+		//store the label text for the connection that will be drawn
+		if(eventBRelation instanceof MachineRefinesRelation) {
+			this.label = "refines";
+		} else if(eventBRelation instanceof MachineSeesRelation) {
+			this.label = "sees";
+		} else if(eventBRelation instanceof ContextExtendsRelation) {
+			this.label = "extends";
+		}
 	}
 
 	@Override
