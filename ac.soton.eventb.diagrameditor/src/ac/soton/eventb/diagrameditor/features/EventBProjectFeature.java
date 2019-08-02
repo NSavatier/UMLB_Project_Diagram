@@ -1,8 +1,14 @@
 package ac.soton.eventb.diagrameditor.features;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.eclipse.emf.common.util.EList;
+import org.eclipse.emf.common.util.TreeIterator;
+import org.eclipse.emf.ecore.ENamedElement;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.graphiti.features.IAddFeature;
 import org.eclipse.graphiti.features.ICreateConnectionFeature;
 import org.eclipse.graphiti.features.ICreateFeature;
@@ -23,6 +29,7 @@ import org.eclipse.graphiti.mm.pictograms.AnchorContainer;
 import org.eclipse.graphiti.mm.pictograms.Connection;
 import org.eclipse.graphiti.mm.pictograms.ContainerShape;
 import org.eclipse.graphiti.mm.pictograms.Diagram;
+import org.eclipse.graphiti.mm.pictograms.PictogramElement;
 import org.eclipse.graphiti.mm.pictograms.Shape;
 import org.eclipse.graphiti.services.Graphiti;
 import org.eventb.emf.core.EventBNamedCommentedElement;
@@ -33,6 +40,7 @@ import org.eventb.emf.persistence.ProjectResource;
 
 import ac.soton.eventb.diagrameditor.EventBDiagramFeatureProvider;
 import ac.soton.eventb.diagrameditor.relations.ContextExtendsRelation;
+import ac.soton.eventb.diagrameditor.relations.EventBRelation;
 import ac.soton.eventb.diagrameditor.relations.MachineRefinesRelation;
 import ac.soton.eventb.diagrameditor.relations.MachineSeesRelation;
 
@@ -150,7 +158,26 @@ class EventBProjectUpdateFeature extends AbstractUpdateFeature {
 			ac.setTargetContainer(this.getDiagram());
 			ac.setNewObject(e);
 			this.getFeatureProvider().addIfPossible(ac);
+			
+			//also, for each EventBNamedCommentedElement, we look for any relation that points to an EventBNamedCommentedElement
+			//And we create a Shape for any that we find.
+			TreeIterator<EObject> contents = e.eAllContents();
+			while(contents.hasNext()) {
+				EObject content = contents.next();
+				//if the element is an EventBNamedCommentedElement, we try to display it
+				if(content instanceof EventBNamedCommentedElement) {
+					final AddContext addContext = new AddContext();
+					addContext.setTargetContainer(this.getDiagram());
+					addContext.setNewObject(content);
+					this.getFeatureProvider().addIfPossible(addContext);
+				}
+				
+				
+			}
+			
+			
 		}
+		
 
 		//Remove the links graphical components (to redraw them properly)
 		//ie : unregister the connections from the elements to which they are connected, then remove them
