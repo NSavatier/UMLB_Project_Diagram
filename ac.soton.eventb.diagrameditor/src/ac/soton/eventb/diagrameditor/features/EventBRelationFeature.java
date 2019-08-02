@@ -266,6 +266,7 @@ public class EventBRelationFeature implements IEventBFeature {
 		return null;
 	}
 
+	//defines the create relationships features provided
 	@Override
 	public Collection<? extends ICreateConnectionFeature> getCreateRelationshipFeatures(
 			EventBDiagramFeatureProvider fp) {

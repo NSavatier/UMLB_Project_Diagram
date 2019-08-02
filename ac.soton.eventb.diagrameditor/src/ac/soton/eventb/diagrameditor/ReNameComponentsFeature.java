@@ -15,6 +15,10 @@ import org.eventb.emf.core.machine.MachineFactory;
 
 import ac.soton.eventb.diagrameditor.features.EventBElementFeature;
 
+/**
+ * Provides the feature to rename Contexts and Machines.
+ * This feature is registered via the getCustomFeatures() of the EventBDiagramFeatureProvider
+ */
 public class ReNameComponentsFeature extends AbstractCustomFeature{
 	EventBElementFeature feature;
 	public ReNameComponentsFeature(IFeatureProvider fp) {
@@ -22,8 +26,9 @@ public class ReNameComponentsFeature extends AbstractCustomFeature{
 		// TODO Auto-generated constructor stub
 	}
 	
+	//Name of the feature displayed in the menu
 	public String getName(){
-		return "Custom: re-name";
+		return "Rename this Element";
 	}
 	
 	public String getDescription(){

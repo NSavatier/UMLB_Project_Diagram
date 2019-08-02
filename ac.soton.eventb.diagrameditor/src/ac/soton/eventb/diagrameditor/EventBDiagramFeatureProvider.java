@@ -132,10 +132,12 @@ public class EventBDiagramFeatureProvider extends DefaultFeatureProvider {
 		final IExtensionPoint extensionPoint = registry.getExtensionPoint("ac.soton.eventb.diagrameditor.featureprovider"); //$NON-NLS-1$
 
 		//Register provided features
-		final IEventBFeature[] providedFeatures = { new EventBElementFeature(),
-				new EventBRelationFeature(), new EventBProjectFeature() };
+		final IEventBFeature[] providedFeatures = { 
+				new EventBElementFeature(),
+				new EventBRelationFeature(), 
+				new EventBProjectFeature() 
+		};
 		final ArrayList<IEventBFeature> features = new ArrayList<>();
-
 		for(final IEventBFeature feature : providedFeatures) {
 			features.add(feature);
 		}
@@ -242,6 +244,7 @@ public class EventBDiagramFeatureProvider extends DefaultFeatureProvider {
 	}
 	
 	public ICustomFeature[] getCustomFeatures(ICustomContext context){
+		//the rename custom feature is registered here
 		return new ICustomFeature[]{new ReNameComponentsFeature(this)};
 	}
 	
