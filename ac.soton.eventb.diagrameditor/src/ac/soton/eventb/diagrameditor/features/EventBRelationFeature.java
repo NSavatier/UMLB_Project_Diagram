@@ -40,6 +40,10 @@ import ac.soton.eventb.diagrameditor.relations.EventBRelation;
 import ac.soton.eventb.diagrameditor.relations.MachineRefinesRelation;
 import ac.soton.eventb.diagrameditor.relations.MachineSeesRelation;
 
+/**
+ * Defines the Extends RelationShip feature.
+ * This describes the connection that can be drawn between two Contexts.
+ */
 class CreateExtendsRelationshipFeature extends AbstractCreateConnectionFeature {
 
 	public CreateExtendsRelationshipFeature(IFeatureProvider fp) {
@@ -70,7 +74,8 @@ class CreateExtendsRelationshipFeature extends AbstractCreateConnectionFeature {
 
 		return source instanceof Context;
 	}
-
+	
+	//Describes what happens when an "Extends" link is created using the dedicated Diagram tool
 	@Override
 	public Connection create(ICreateConnectionContext context) {
 		final Object source = this
@@ -93,6 +98,10 @@ class CreateExtendsRelationshipFeature extends AbstractCreateConnectionFeature {
 
 }
 
+/**
+ * Defines the Refines RelationShip feature.
+ * This describes the connection that can be drawn between two Machines.
+ */
 class CreateRefinesRelationshipFeature extends AbstractCreateConnectionFeature {
 
 	public CreateRefinesRelationshipFeature(IFeatureProvider fp) {
@@ -146,6 +155,11 @@ class CreateRefinesRelationshipFeature extends AbstractCreateConnectionFeature {
 
 }
 
+
+/**
+ * Defines the Sees RelationShip feature.
+ * This describes the connection that can be drawn between a Machine and a Context.
+ */
 class CreateSeesRelationshipFeature extends AbstractCreateConnectionFeature {
 
 	public CreateSeesRelationshipFeature(IFeatureProvider fp) {
@@ -199,6 +213,10 @@ class CreateSeesRelationshipFeature extends AbstractCreateConnectionFeature {
 
 }
 
+/**
+ * Defines how the EventBRelations are drawn on the diagram.
+ * the getAddMatcher() method returns a Matcher whose role is to provide the right EventBRelationshipAddFeature.
+ */
 public class EventBRelationFeature implements IEventBFeature {
 	@Override
 	public boolean canAdd() {
@@ -234,28 +252,39 @@ public class EventBRelationFeature implements IEventBFeature {
 	public Matcher<IAddContext, IAddFeature> getAddMatcher() {
 		return new Matcher<IAddContext, IAddFeature>() {
 
+			//This method is the important one, as it is the one that describes what add feature will be returned,
+			//depending on the addContext that needs to be drawn
 			@Override
-			public IAddFeature getFeature(IAddContext o,
-					EventBDiagramFeatureProvider e) {
+			public IAddFeature getFeature(IAddContext addContext,
+					EventBDiagramFeatureProvider featureProvider) {
 				
-				if(o.toString().contains("MachineRefinesRelation")){
+				
+				
+				//FIXME : Damn, now that the code is more clear to me, this seems so dirty ... i will probably rewrite that, once I have fixed all the bugs
+				//FIXME : Seriously, the guys who wrote that could have used addContext.getNewObject() instead.
+				//FIXME : ie : if( addContext.getNewObject() instanceof MachineRefinesRelation) { doStuff(); }
+				//FIXME : to check it, if you don't believe me : System.out.println("addContextNewObject : "+addContext.getNewObject());
+				
+				if(addContext.toString().contains("MachineRefinesRelation")){
 					EventBRelationshipAddFeature.i = 1;
 				}
-				else if(o.toString().contains("MachineSeesRelation")){
+				else if(addContext.toString().contains("MachineSeesRelation")){
 					EventBRelationshipAddFeature.i = 2;
-				}else if(o.toString().contains("ContextExtendsRelation")){
+				}else if(addContext.toString().contains("ContextExtendsRelation")){
 					EventBRelationshipAddFeature.i = 3;
 				}
 
-				if (this.match(o, e)) {
-					return new EventBRelationshipAddFeature(e);
+				
+				if (this.match(addContext, featureProvider)) {
+					return new EventBRelationshipAddFeature(featureProvider);
 				}
 				return null;
 			}
 
 			@Override
-			public boolean match(IAddContext o, EventBDiagramFeatureProvider e) {
-				return o.getNewObject() instanceof EventBRelation;
+			public boolean match(IAddContext addContext, EventBDiagramFeatureProvider featureProvider) {
+				
+				return addContext.getNewObject() instanceof EventBRelation;
 			}
 		};
 	}
@@ -277,22 +306,23 @@ public class EventBRelationFeature implements IEventBFeature {
 		return relationshipList;
 	}
 
+	//defines the delete features provided
 	@Override
 	public Matcher<IDeleteContext, IDeleteFeature> getDeleteMatcher() {
 		return new Matcher<IDeleteContext, IDeleteFeature>() {
+			
+			//the delete features are registered here
 			@Override
-			public IDeleteFeature getFeature(IDeleteContext o,
-					EventBDiagramFeatureProvider e) {
-				if (this.match(o, e)) {
-					return new EventBRelationshipDeleteFeature(e);
+			public IDeleteFeature getFeature(IDeleteContext deleteContext, EventBDiagramFeatureProvider featureProvider) {
+				if (this.match(deleteContext, featureProvider)) {
+					return new EventBRelationshipDeleteFeature(featureProvider);
 				}
 				return null;
 			}
 
 			@Override
-			public boolean match(IDeleteContext o,
-					EventBDiagramFeatureProvider e) {
-				return e.getBusinessObjectForPictogramElement(o.getPictogramElement()) 
+			public boolean match(IDeleteContext deleteContext, EventBDiagramFeatureProvider featureProvider) {
+				return featureProvider.getBusinessObjectForPictogramElement(deleteContext.getPictogramElement())
 					   instanceof EventBRelation;
 			}
 		};
@@ -310,6 +340,9 @@ public class EventBRelationFeature implements IEventBFeature {
 
 }
 
+/**
+ * Defines how the links (relations) are drawn
+ */
 class EventBRelationshipAddFeature extends AbstractAddFeature {
 	public static int i;
 	//For creating the polyline arrow
@@ -348,6 +381,7 @@ class EventBRelationshipAddFeature extends AbstractAddFeature {
 
 	@Override
 	public PictogramElement add(IAddContext context) {
+		
 		final IAddConnectionContext addConContext = (IAddConnectionContext) context;
 		final IPeCreateService peCreateService = Graphiti.getPeCreateService();
 
@@ -379,6 +413,7 @@ class EventBRelationshipAddFeature extends AbstractAddFeature {
 
 	@Override
 	public boolean canAdd(IAddContext context) {
+		
 		if (context instanceof IAddConnectionContext
 				&& context.getNewObject() instanceof EventBRelation) {
 			return true;
@@ -388,8 +423,10 @@ class EventBRelationshipAddFeature extends AbstractAddFeature {
 
 }
 
-class EventBRelationshipDeleteFeature extends
-org.eclipse.graphiti.ui.features.DefaultDeleteFeature {
+/**
+ * Describes how the deletion of a relation must be handled
+ */
+class EventBRelationshipDeleteFeature extends org.eclipse.graphiti.ui.features.DefaultDeleteFeature {
 
 	public EventBRelationshipDeleteFeature(IFeatureProvider fp) {
 		super(fp);
